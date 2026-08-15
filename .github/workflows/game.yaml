@@ -1,0 +1,37 @@
+name: Play Tic-Tac-Toe
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  play:
+    runs-on: ubuntu-latest
+    # Chỉ chạy nếu tiêu đề issue bắt đầu bằng "ttt|move|"
+    if: startsWith(github.event.issue.title, 'ttt|move|')
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js (Nếu viết script bằng JS)
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Run Game Engine
+        run: node play.js "${{ github.event.issue.title }}" "${{ github.event.issue.user.login }}"
+
+      - name: Close the Issue
+        uses: peter-evans/close-issue@v2
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          comment: "Good move! I have updated the README. 🤖"
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md state.json
+          git commit -m "update game board"
+          git push
