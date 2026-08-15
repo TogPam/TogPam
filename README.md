@@ -70,7 +70,7 @@
 </table>
 <!-- BOARD_END -->
 <p align="center">
-  <a href="https://github.com/TogPam/TogPam/issues/new?title=ttt|reset">🔄 Bấm vào đây để Reset ván mới</a>
+  <a href="https://github.com/TogPam/TogPam/issues/new?title=ttt|reset">🔄 Reset</a>
 </p>
 </td>
 </tr>
@@ -88,6 +88,13 @@
 <a href="https://github.com/TogPam">
 <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white">
 </a>
+
+<a href="https://web.facebook.com/htmls.php1/" target="_blank">
+    <img src="https://img.shields.io/badge/facebook-blue?logo=facebook" alt="Facebook">
+  </a>
+  <a href="mailto:rthong.pam@gmail.com">
+    <img src="https://img.shields.io/badge/gmail-white?logo=gmail" alt="Gmail">
+  </a>
 </div>
 <br>
 <div align="center">
