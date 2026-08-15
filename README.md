@@ -10,7 +10,7 @@
 <tr>
 <td width="40%" valign="top">
 <h3>⚡ Status</h3>
-<img src="https://github-readme-stats.vercel.app/api?username=TogPam&theme=tokyonight&show_icons=true&hide_border=true" alt="Stats" width="100%">
+<img src="https://github-readme-streak-stats.herokuapp.com/?user=togpam&theme=tokyonight&hide_border=true" alt="Stats" width="100%">
 <br><br>
 <h3>🛠️ Tech Stack</h3>
 <p>
