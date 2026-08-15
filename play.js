@@ -42,27 +42,32 @@ if (command === "reset") {
   state.status = "playing";
 } else if (!isNaN(command)) {
   const move = parseInt(command);
-  // Chỉ cho đánh khi ô trống và game chưa kết thúc
+
+  // 1. Chỉ nhận nước đi của người chơi (X) vào ô trống
   if (
     move >= 0 &&
     move < 9 &&
     state.board[move] === null &&
     state.status === "playing"
   ) {
-    state.board[move] = "X";
+    state.board[move] = "X"; // Người chơi đánh X
 
+    // 2. Kiểm tra người chơi đã thắng chưa trước khi bot đi
     let winner = checkWinner(state.board);
+
+    // 3. Nếu chưa ai thắng, Bot (O) mới được đi
     if (!winner) {
       const empty = state.board
         .map((v, i) => (v === null ? i : null))
         .filter((v) => v !== null);
       if (empty.length > 0) {
         const botMove = empty[Math.floor(Math.random() * empty.length)];
-        state.board[botMove] = "O";
-        winner = checkWinner(state.board);
+        state.board[botMove] = "O"; // Bot đánh O
+        winner = checkWinner(state.board); // Kiểm tra lại sau khi bot đi
       }
     }
 
+    // Cập nhật trạng thái
     if (winner === "X") state.status = "won";
     else if (winner === "O") state.status = "lost";
     else if (winner === "draw") state.status = "draw";
@@ -82,6 +87,7 @@ else if (state.status === "draw")
     '<br><img src="https://img.shields.io/badge/Result-Draw-blue?style=for-the-badge">';
 
 // 5. Render HTML bàn cờ
+// Đảm bảo đoạn này trong renderCell:
 const renderCell = (v, i) =>
   v
     ? `<img src="https://placehold.co/50x50/21262d/${v === "X" ? "ff5555" : "55ff55"}/png?text=${v}" width="50">`
