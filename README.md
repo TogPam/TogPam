@@ -28,19 +28,19 @@
 <!-- BOARD_START -->
 <table border="1" style="border-collapse: collapse; border-color: #30363d;">
 <tr>
-<td width="60" height="60" align="center"><a href="https://github.com/YOUR_GITHUB_USERNAME/YOUR_GITHUB_USERNAME/issues/new?title=ttt|0"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
-<td width="60" height="60" align="center"><a href="https://github.com/YOUR_GITHUB_USERNAME/YOUR_GITHUB_USERNAME/issues/new?title=ttt|1"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
-<td width="60" height="60" align="center"><a href="https://github.com/YOUR_GITHUB_USERNAME/YOUR_GITHUB_USERNAME/issues/new?title=ttt|2"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
+<td width="60" height="60" align="center"><a href="https://github.com/TogPam/TogPam/issues/new?title=ttt|0"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
+<td width="60" height="60" align="center"><a href="https://github.com/TogPam/TogPam/issues/new?title=ttt|1"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
+<td width="60" height="60" align="center"><a href="https://github.com/TogPam/TogPam/issues/new?title=ttt|2"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
 </tr>
 <tr>
-<td width="60" height="60" align="center"><a href="https://github.com/YOUR_GITHUB_USERNAME/YOUR_GITHUB_USERNAME/issues/new?title=ttt|3"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
-<td width="60" height="60" align="center"><a href="https://github.com/YOUR_GITHUB_USERNAME/YOUR_GITHUB_USERNAME/issues/new?title=ttt|4"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
-<td width="60" height="60" align="center"><a href="https://github.com/YOUR_GITHUB_USERNAME/YOUR_GITHUB_USERNAME/issues/new?title=ttt|5"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
+<td width="60" height="60" align="center"><a href="https://github.com/TogPam/TogPam/issues/new?title=ttt|3"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
+<td width="60" height="60" align="center"><a href="https://github.com/TogPam/TogPam/issues/new?title=ttt|4"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
+<td width="60" height="60" align="center"><a href="https://github.com/TogPam/TogPam/issues/new?title=ttt|5"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
 </tr>
 <tr>
-<td width="60" height="60" align="center"><a href="https://github.com/YOUR_GITHUB_USERNAME/YOUR_GITHUB_USERNAME/issues/new?title=ttt|6"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
-<td width="60" height="60" align="center"><a href="https://github.com/YOUR_GITHUB_USERNAME/YOUR_GITHUB_USERNAME/issues/new?title=ttt|7"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
-<td width="60" height="60" align="center"><a href="https://github.com/YOUR_GITHUB_USERNAME/YOUR_GITHUB_USERNAME/issues/new?title=ttt|8"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
+<td width="60" height="60" align="center"><a href="https://github.com/TogPam/TogPam/issues/new?title=ttt|6"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
+<td width="60" height="60" align="center"><a href="https://github.com/TogPam/TogPam/issues/new?title=ttt|7"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
+<td width="60" height="60" align="center"><a href="https://github.com/TogPam/TogPam/issues/new?title=ttt|8"><img src="https://via.placeholder.com/50/0d1117/0d1117" width="50"></a></td>
 </tr>
 </table>
 <!-- BOARD_END -->
