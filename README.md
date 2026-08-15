@@ -69,6 +69,9 @@
 </tr>
 </table>
 <!-- BOARD_END -->
+<p align="center">
+  <a href="https://github.com/TogPam/TogPam/issues/new?title=ttt|reset">🔄 Bấm vào đây để Reset ván mới</a>
+</p>
 </td>
 </tr>
 </table>

@@ -25,6 +25,12 @@ const state = JSON.parse(fs.readFileSync("./state.json", "utf8"));
 // 1. Thực hiện nước đi của người chơi
 if (issueTitle && issueTitle.startsWith("ttt|")) {
   const move = parseInt(issueTitle.split("|")[1]);
+
+  if (command === "reset") {
+    state.board = [null, null, null, null, null, null, null, null, null];
+    state.status = "playing";
+  }
+
   if (state.board[move] === null) {
     state.board[move] = "X";
 
