@@ -1,83 +1,79 @@
 const fs = require("fs");
 
+// Các hàm logic (đáng lẽ nên để ở game.js nhưng để đây cho tiện copy)
+function checkWinner(board) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+  for (let [a, b, c] of lines) {
+    if (board[a] && board[a] === board[b] && board[a] === board[c])
+      return board[a];
+  }
+  return board.includes(null) ? null : "draw";
+}
+
 const issueTitle = process.argv[2];
-const username = "TogPam"; // Tên repo của bạn
+const state = JSON.parse(fs.readFileSync("./state.json", "utf8"));
 
-if (!issueTitle || !issueTitle.startsWith("ttt|")) {
-  console.log("Không phải lệnh đánh cờ. Bỏ qua.");
-  process.exit(0);
+// 1. Thực hiện nước đi của người chơi
+if (issueTitle && issueTitle.startsWith("ttt|")) {
+  const move = parseInt(issueTitle.split("|")[1]);
+  if (state.board[move] === null) {
+    state.board[move] = "X";
+
+    // Kiểm tra sau khi người chơi đi
+    let winner = checkWinner(state.board);
+
+    // Bot chỉ đi nếu chưa có người thắng
+    if (!winner) {
+      const empty = state.board
+        .map((v, i) => (v === null ? i : null))
+        .filter((v) => v !== null);
+      if (empty.length > 0) {
+        const botMove = empty[Math.floor(Math.random() * empty.length)];
+        state.board[botMove] = "O";
+        winner = checkWinner(state.board); // Kiểm tra lại sau khi bot đi
+      }
+    }
+
+    // 2. Cập nhật trạng thái
+    let badge = "";
+    if (winner === "X") {
+      badge =
+        '<br><img src="https://img.shields.io/badge/Winner-You_Are_Pro!-gold?style=for-the-badge&logo=github">';
+      state.status = "won";
+    } else if (winner === "O") {
+      badge =
+        '<br><img src="https://img.shields.io/badge/Winner-Bot_Wins-red?style=for-the-badge">';
+      state.status = "lost";
+    } else if (winner === "draw") {
+      badge =
+        '<br><img src="https://img.shields.io/badge/Result-Draw-blue?style=for-the-badge">';
+      state.status = "draw";
+    }
+
+    // 3. Render bàn cờ & Badge
+    const renderCell = (v, i) =>
+      v
+        ? `<img src="https://placehold.co/50x50/21262d/${v === "X" ? "ff5555" : "55ff55"}/png?text=${v}" width="50">`
+        : `<a href="https://github.com/TogPam/TogPam/issues/new?title=ttt|${i}"><img src="https://placehold.co/50x50/21262d/21262d.png" width="50"></a>`;
+
+    const boardHtml = `<table border="1" style="border-collapse: collapse; border-color: #30363d;"><tr>${state.board.map((v, i) => `<td width="60" height="60" align="center">${renderCell(v, i)}</td>${(i + 1) % 3 === 0 ? "</tr><tr>" : ""}`).join("")}</table>${badge}`;
+
+    // 4. Ghi vào README
+    let readme = fs.readFileSync("./README.md", "utf8");
+    readme = readme.replace(
+      /<!-- BOARD_START -->[\s\S]*<!-- BOARD_END -->/,
+      `<!-- BOARD_START -->\n${boardHtml}\n<!-- BOARD_END -->`,
+    );
+    fs.writeFileSync("./README.md", readme);
+    fs.writeFileSync("./state.json", JSON.stringify(state, null, 2));
+  }
 }
-
-const moveIndex = parseInt(issueTitle.split("|")[1]);
-const statePath = "./state.json";
-const readmePath = "./README.md";
-
-let state = JSON.parse(fs.readFileSync(statePath, "utf8"));
-
-if (state.status !== "playing") {
-  state.board = [null, null, null, null, null, null, null, null, null];
-  state.status = "playing";
-}
-
-if (state.board[moveIndex] === null) {
-  state.board[moveIndex] = "X";
-} else {
-  console.log("Ô này đã được đánh!");
-  process.exit(0);
-}
-
-const emptyIndices = state.board
-  .map((val, idx) => (val === null ? idx : null))
-  .filter((val) => val !== null);
-if (emptyIndices.length > 0) {
-  const randomMove =
-    emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-  state.board[randomMove] = "O";
-}
-
-const getCellHtml = (val, index) => {
-  const emptyImg = `https://placehold.co/50x50/21262d/21262d.png`;
-  const xImg = `https://placehold.co/50x50/21262d/ff5555/png?text=X`; // Chữ X màu đỏ
-  const oImg = `https://placehold.co/50x50/21262d/55ff55/png?text=O`; // Chữ O màu xanh
-
-  if (val === "X") return `<img src="${xImg}" width="50">`;
-  if (val === "O") return `<img src="${oImg}" width="50">`;
-  return `<a href="https://github.com/${username}/${username}/issues/new?title=ttt|${index}"><img src="${emptyImg}" width="50"></a>`;
-};
-
-// QUAN TRỌNG: Các dòng dưới đây phải viết sát lề trái, tuyệt đối không dùng dấu cách hay tab ở đầu dòng!
-const newBoardHtml = `<table border="1" style="border-collapse: collapse; border-color: #30363d;">
-<tr>
-<td width="60" height="60" align="center">${getCellHtml(state.board[0], 0)}</td>
-<td width="60" height="60" align="center">${getCellHtml(state.board[1], 1)}</td>
-<td width="60" height="60" align="center">${getCellHtml(state.board[2], 2)}</td>
-</tr>
-<tr>
-<td width="60" height="60" align="center">${getCellHtml(state.board[3], 3)}</td>
-<td width="60" height="60" align="center">${getCellHtml(state.board[4], 4)}</td>
-<td width="60" height="60" align="center">${getCellHtml(state.board[5], 5)}</td>
-</tr>
-<tr>
-<td width="60" height="60" align="center">${getCellHtml(state.board[6], 6)}</td>
-<td width="60" height="60" align="center">${getCellHtml(state.board[7], 7)}</td>
-<td width="60" height="60" align="center">${getCellHtml(state.board[8], 8)}</td>
-</tr>
-</table>`;
-
-let readme = fs.readFileSync(readmePath, "utf8");
-const startTag = "<!-- BOARD_START -->";
-const endTag = "<!-- BOARD_END -->";
-
-const beforeBoard = readme.substring(
-  0,
-  readme.indexOf(startTag) + startTag.length,
-);
-const afterBoard = readme.substring(readme.indexOf(endTag));
-
-fs.writeFileSync(
-  readmePath,
-  beforeBoard + "\n" + newBoardHtml + "\n" + afterBoard,
-);
-fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
-
-console.log("Đã cập nhật bàn cờ thành công!");

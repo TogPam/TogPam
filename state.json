@@ -1,4 +1,1 @@
-{
-  "board": [null, null, null, null, null, null, null, null, null],
-  "status": "playing"
-}
+{ "board": [null, null, "X", null, "X", null, null, null, null], "status": "playing" }
