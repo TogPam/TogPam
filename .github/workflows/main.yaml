@@ -4,36 +4,70 @@ on:
   issues:
     types: [opened]
 
+permissions:
+  contents: write
+  issues: write
+
+# Quan trọng:
+# Chỉ cho phép 1 ván/nước đi xử lý tại một thời điểm.
+concurrency:
+  group: tictactoe-game
+  cancel-in-progress: false
+
 jobs:
   play-game:
-    runs-on: ubuntu-latest
     if: startsWith(github.event.issue.title, 'ttt|')
-    permissions:
-      contents: write
-      issues: write
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
 
+      - name: Show Current State
+        run: |
+          echo "===== ISSUE ====="
+          echo "${{ github.event.issue.title }}"
+
+          echo "===== STATE ====="
+          if [ -f state.json ]; then
+            cat state.json
+          else
+            echo "state.json chưa tồn tại"
+          fi
+
       - name: Run Game Logic
-        run: node play.js "${{ github.event.issue.title }}"
+        run: |
+          node play.js "${{ github.event.issue.title }}"
+
+      - name: Show New State
+        run: |
+          echo "===== NEW STATE ====="
+          cat state.json
 
       - name: Commit and Push Changes
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git add README.md state.json
-          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update Tic-Tac-Toe board [skip ci]"
-          git push
+
+          if git diff --cached --quiet; then
+            echo "Không có thay đổi."
+          else
+            git commit -m "🎮 Tic-Tac-Toe: ${{ github.event.issue.title }}"
+            git push
+          fi
 
       - name: Close Issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh issue close ${{ github.event.issue.number }} --comment "Nước đi của bạn đã được ghi nhận! Cảm ơn đã chơi."
+          gh issue close "${{ github.event.issue.number }}" \
+            --comment "🎮 Nước đi của bạn đã được ghi nhận! Cảm ơn đã chơi."
