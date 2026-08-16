@@ -24,10 +24,7 @@ if (fs.existsSync(statePath)) {
   try {
     const parsed = JSON.parse(fs.readFileSync(statePath, "utf8"));
 
-    if (
-      Array.isArray(parsed.board) &&
-      parsed.board.length === 9
-    ) {
+    if (Array.isArray(parsed.board) && parsed.board.length === 9) {
       state = {
         board: parsed.board,
         status: parsed.status || "playing",
@@ -57,11 +54,7 @@ function checkWinner(board) {
   ];
 
   for (const [a, b, c] of lines) {
-    if (
-      board[a] &&
-      board[a] === board[b] &&
-      board[a] === board[c]
-    ) {
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
       return board[a];
     }
   }
@@ -84,44 +77,104 @@ function getEmptyCells(board) {
 }
 
 // ============================================================
-// MINIMAX
-// ============================================================
-//
+// SMART BOT AI
 // X = Player
 // O = Bot
-//
-// Bot tries to maximize score.
-// Player tries to minimize score.
+// ============================================================
+
+const WIN_LINES = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6],
+];
+
+// ============================================================
+// CHECK WINNER
+// ============================================================
+
+function checkWinner(board) {
+  for (const [a, b, c] of WIN_LINES) {
+    if (board[a] !== null && board[a] === board[b] && board[a] === board[c]) {
+      return board[a];
+    }
+  }
+
+  if (!board.includes(null)) {
+    return "draw";
+  }
+
+  return null;
+}
+
+// ============================================================
+// EMPTY CELLS
+// ============================================================
+
+function getEmptyCells(board) {
+  return board
+    .map((value, index) => (value === null ? index : null))
+    .filter((value) => value !== null);
+}
+
+// ============================================================
+// FIND IMMEDIATE WIN
+// ============================================================
+
+function findWinningMove(board, player) {
+  const emptyCells = getEmptyCells(board);
+
+  for (const index of emptyCells) {
+    board[index] = player;
+
+    const winner = checkWinner(board);
+
+    board[index] = null;
+
+    if (winner === player) {
+      return index;
+    }
+  }
+
+  return null;
+}
+
+// ============================================================
+// MINIMAX
 // ============================================================
 
 function minimax(board, depth, isMaximizing) {
   const winner = checkWinner(board);
 
+  // Bot thắng
   if (winner === "O") {
     return 10 - depth;
   }
 
+  // Người chơi thắng
   if (winner === "X") {
     return depth - 10;
   }
 
+  // Hòa
   if (winner === "draw") {
     return 0;
   }
 
   const emptyCells = getEmptyCells(board);
 
+  // BOT
   if (isMaximizing) {
     let bestScore = -Infinity;
 
     for (const index of emptyCells) {
       board[index] = "O";
 
-      const score = minimax(
-        board,
-        depth + 1,
-        false,
-      );
+      const score = minimax(board, depth + 1, false);
 
       board[index] = null;
 
@@ -131,16 +184,13 @@ function minimax(board, depth, isMaximizing) {
     return bestScore;
   }
 
+  // PLAYER
   let bestScore = Infinity;
 
   for (const index of emptyCells) {
     board[index] = "X";
 
-    const score = minimax(
-      board,
-      depth + 1,
-      true,
-    );
+    const score = minimax(board, depth + 1, true);
 
     board[index] = null;
 
@@ -151,7 +201,7 @@ function minimax(board, depth, isMaximizing) {
 }
 
 // ============================================================
-// BOT MOVE
+// SMART BOT MOVE
 // ============================================================
 
 function getBotMove(board) {
@@ -161,27 +211,88 @@ function getBotMove(board) {
     return null;
   }
 
+  // ----------------------------------------------------------
+  // 1. BOT CÓ THỂ THẮNG → THẮNG NGAY
+  // ----------------------------------------------------------
+
+  const winningMove = findWinningMove(board, "O");
+
+  if (winningMove !== null) {
+    console.log(`🤖 Bot thấy nước thắng: ${winningMove}`);
+
+    return winningMove;
+  }
+
+  // ----------------------------------------------------------
+  // 2. PLAYER SẮP THẮNG → CHẶN
+  // ----------------------------------------------------------
+
+  const blockingMove = findWinningMove(board, "X");
+
+  if (blockingMove !== null) {
+    console.log(`🛡️ Bot chặn Player tại: ${blockingMove}`);
+
+    return blockingMove;
+  }
+
+  // ----------------------------------------------------------
+  // 3. MINIMAX
+  // ----------------------------------------------------------
+
   let bestScore = -Infinity;
-  let bestMove = emptyCells[0];
+  let bestMoves = [];
 
   for (const index of emptyCells) {
     board[index] = "O";
 
-    const score = minimax(
-      board,
-      0,
-      false,
-    );
+    const score = minimax(board, 0, false);
 
     board[index] = null;
 
     if (score > bestScore) {
       bestScore = score;
-      bestMove = index;
+      bestMoves = [index];
+    } else if (score === bestScore) {
+      bestMoves.push(index);
     }
   }
 
-  return bestMove;
+  // ----------------------------------------------------------
+  // 4. ƯU TIÊN CENTER NẾU CÙNG ĐIỂM
+  // ----------------------------------------------------------
+
+  if (bestMoves.includes(4) && board[4] === null) {
+    console.log("🎯 Bot ưu tiên Center.");
+
+    return 4;
+  }
+
+  // ----------------------------------------------------------
+  // 5. ƯU TIÊN CORNERS
+  // ----------------------------------------------------------
+
+  const corners = [0, 2, 6, 8];
+
+  const availableCorners = corners.filter((index) => bestMoves.includes(index));
+
+  if (availableCorners.length > 0) {
+    const corner =
+      availableCorners[Math.floor(Math.random() * availableCorners.length)];
+
+    console.log(`📐 Bot chọn Corner: ${corner}`);
+
+    return corner;
+  }
+
+  // ----------------------------------------------------------
+  // 6. RANDOM GIỮA CÁC NƯỚC TƯƠNG ĐƯƠNG
+  // ----------------------------------------------------------
+
+  const selected = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+
+  console.log(`🧠 Bot chọn nước tối ưu: ${selected}`);
+
+  return selected;
 }
 
 // ============================================================
@@ -211,7 +322,6 @@ if (command === "reset") {
 // ============================================================
 // PLAYER MOVE
 // ============================================================
-
 else if (/^[0-8]$/.test(command)) {
   const move = Number(command);
 
@@ -225,19 +335,15 @@ else if (/^[0-8]$/.test(command)) {
   if (state.status !== "playing") {
     console.log("Game đã kết thúc.");
 
-  // ----------------------------------------------------------
-  // CELL ALREADY USED
-  // ----------------------------------------------------------
-
+    // ----------------------------------------------------------
+    // CELL ALREADY USED
+    // ----------------------------------------------------------
   } else if (state.board[move] !== null) {
-    console.log(
-      `Ô ${move} đã được sử dụng bởi ${state.board[move]}.`,
-    );
+    console.log(`Ô ${move} đã được sử dụng bởi ${state.board[move]}.`);
 
-  // ----------------------------------------------------------
-  // PLAYER = X
-  // ----------------------------------------------------------
-
+    // ----------------------------------------------------------
+    // PLAYER = X
+    // ----------------------------------------------------------
   } else {
     state.board[move] = "X";
 
@@ -258,7 +364,6 @@ else if (/^[0-8]$/.test(command)) {
     // --------------------------------------------------------
     // CHECK DRAW
     // --------------------------------------------------------
-
     else if (winner === "draw") {
       state.status = "draw";
 
@@ -268,16 +373,13 @@ else if (/^[0-8]$/.test(command)) {
     // --------------------------------------------------------
     // BOT = O
     // --------------------------------------------------------
-
     else {
       const botMove = getBotMove(state.board);
 
       if (botMove !== null) {
         state.board[botMove] = "O";
 
-        console.log(
-          `Bot đặt O vào ô ${botMove}.`,
-        );
+        console.log(`Bot đặt O vào ô ${botMove}.`);
       }
 
       // ------------------------------------------------------
@@ -295,7 +397,6 @@ else if (/^[0-8]$/.test(command)) {
       // ------------------------------------------------------
       // CHECK DRAW
       // ------------------------------------------------------
-
       else if (winner === "draw") {
         state.status = "draw";
 
@@ -305,7 +406,6 @@ else if (/^[0-8]$/.test(command)) {
       // ------------------------------------------------------
       // GAME CONTINUES
       // ------------------------------------------------------
-
       else {
         state.status = "playing";
       }
@@ -316,7 +416,6 @@ else if (/^[0-8]$/.test(command)) {
 // ============================================================
 // INVALID COMMAND
 // ============================================================
-
 else {
   console.log("Nước đi không hợp lệ:", command);
   process.exit(0);
@@ -331,14 +430,10 @@ let badge = "";
 if (state.status === "won") {
   badge =
     '<br><img src="https://img.shields.io/badge/Winner-You_Are_Pro!-gold?style=for-the-badge&logo=github">';
-}
-
-else if (state.status === "lost") {
+} else if (state.status === "lost") {
   badge =
     '<br><img src="https://img.shields.io/badge/Winner-Bot_Wins-red?style=for-the-badge">';
-}
-
-else if (state.status === "draw") {
+} else if (state.status === "draw") {
   badge =
     '<br><img src="https://img.shields.io/badge/Result-Draw-blue?style=for-the-badge">';
 }
@@ -367,14 +462,8 @@ const boardHtml =
   state.board
     .map(
       (v, i) =>
-        `<td width="60" height="60" align="center">${renderCell(
-          v,
-          i,
-        )}</td>${
-          (i + 1) % 3 === 0
-            ? "</tr>" +
-              (i + 1 < 9 ? "<tr>" : "")
-            : ""
+        `<td width="60" height="60" align="center">${renderCell(v, i)}</td>${
+          (i + 1) % 3 === 0 ? "</tr>" + (i + 1 < 9 ? "<tr>" : "") : ""
         }`,
     )
     .join("") +
@@ -385,10 +474,7 @@ const boardHtml =
 // ============================================================
 
 if (fs.existsSync(readmePath)) {
-  let readme = fs.readFileSync(
-    readmePath,
-    "utf8",
-  );
+  let readme = fs.readFileSync(readmePath, "utf8");
 
   if (
     readme.includes("<!-- BOARD_START -->") &&
@@ -399,17 +485,11 @@ if (fs.existsSync(readmePath)) {
       `<!-- BOARD_START -->\n${boardHtml}\n<!-- BOARD_END -->`,
     );
 
-    fs.writeFileSync(
-      readmePath,
-      readme,
-      "utf8",
-    );
+    fs.writeFileSync(readmePath, readme, "utf8");
 
     console.log("README đã được cập nhật.");
   } else {
-    console.log(
-      "Không tìm thấy BOARD_START / BOARD_END.",
-    );
+    console.log("Không tìm thấy BOARD_START / BOARD_END.");
   }
 }
 
@@ -417,11 +497,7 @@ if (fs.existsSync(readmePath)) {
 // SAVE STATE
 // ============================================================
 
-fs.writeFileSync(
-  statePath,
-  JSON.stringify(state, null, 2),
-  "utf8",
-);
+fs.writeFileSync(statePath, JSON.stringify(state, null, 2), "utf8");
 
 console.log("");
 console.log("==============================");
