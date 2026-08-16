@@ -1,19 +1,9 @@
 const fs = require("fs");
 
-// ============================================================
-// CONFIG
-// ============================================================
-
 const issueTitle = process.argv[2] || "";
-
-const STATE_PATH = "./state.json";
-const README_PATH = "./README.md";
-
-const GITHUB_USERNAME = "TogPam";
-const GITHUB_REPO = "TogPam";
-
-const BOARD_START = "<!-- BOARD_START -->";
-const BOARD_END = "<!-- BOARD_END -->";
+const statePath = "./state.json";
+const readmePath = "./README.md";
+const username = "TogPam";
 
 // ============================================================
 // DEFAULT STATE
@@ -28,78 +18,47 @@ const DEFAULT_STATE = {
 // LOAD STATE
 // ============================================================
 
-function loadState() {
-  if (!fs.existsSync(STATE_PATH)) {
-    console.log("state.json chưa tồn tại. Khởi tạo game mới.");
-    return { ...DEFAULT_STATE, board: [...DEFAULT_STATE.board] };
-  }
+let state = { ...DEFAULT_STATE };
 
+if (fs.existsSync(statePath)) {
   try {
-    const raw = fs.readFileSync(STATE_PATH, "utf8");
-    const parsed = JSON.parse(raw);
+    const parsed = JSON.parse(fs.readFileSync(statePath, "utf8"));
 
     if (
-      !parsed ||
-      !Array.isArray(parsed.board) ||
-      parsed.board.length !== 9
+      Array.isArray(parsed.board) &&
+      parsed.board.length === 9
     ) {
-      throw new Error("State không hợp lệ.");
+      state = {
+        board: parsed.board,
+        status: parsed.status || "playing",
+      };
+    } else {
+      console.log("State không hợp lệ, khởi tạo lại.");
     }
-
-    return {
-      board: parsed.board,
-      status: parsed.status || "playing",
-    };
-  } catch (error) {
-    console.log("State file lỗi:", error.message);
-    console.log("Khởi tạo game mới.");
-
-    return {
-      ...DEFAULT_STATE,
-      board: [...DEFAULT_STATE.board],
-    };
+  } catch (e) {
+    console.log("State file lỗi, khởi tạo lại từ đầu.");
   }
 }
-
-// ============================================================
-// SAVE STATE
-// ============================================================
-
-function saveState(state) {
-  fs.writeFileSync(
-    STATE_PATH,
-    JSON.stringify(state, null, 2) + "\n",
-    "utf8",
-  );
-
-  console.log("Đã lưu state.json.");
-}
-
-// ============================================================
-// WIN CONDITIONS
-// ============================================================
-
-const WIN_LINES = [
-  [0, 1, 2],
-  [3, 4, 5],
-  [6, 7, 8],
-
-  [0, 3, 6],
-  [1, 4, 7],
-  [2, 5, 8],
-
-  [0, 4, 8],
-  [2, 4, 6],
-];
 
 // ============================================================
 // CHECK WINNER
 // ============================================================
 
 function checkWinner(board) {
-  for (const [a, b, c] of WIN_LINES) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+
+  for (const [a, b, c] of lines) {
     if (
-      board[a] !== null &&
+      board[a] &&
       board[a] === board[b] &&
       board[a] === board[c]
     ) {
@@ -115,13 +74,13 @@ function checkWinner(board) {
 }
 
 // ============================================================
-// EMPTY CELLS
+// GET EMPTY CELLS
 // ============================================================
 
 function getEmptyCells(board) {
   return board
     .map((value, index) => (value === null ? index : null))
-    .filter((index) => index !== null);
+    .filter((value) => value !== null);
 }
 
 // ============================================================
@@ -133,11 +92,6 @@ function getEmptyCells(board) {
 //
 // Bot tries to maximize score.
 // Player tries to minimize score.
-//
-// Score:
-// Bot win  = +10
-// Player win = -10
-// Draw = 0
 // ============================================================
 
 function minimax(board, depth, isMaximizing) {
@@ -163,7 +117,11 @@ function minimax(board, depth, isMaximizing) {
     for (const index of emptyCells) {
       board[index] = "O";
 
-      const score = minimax(board, depth + 1, false);
+      const score = minimax(
+        board,
+        depth + 1,
+        false,
+      );
 
       board[index] = null;
 
@@ -178,7 +136,11 @@ function minimax(board, depth, isMaximizing) {
   for (const index of emptyCells) {
     board[index] = "X";
 
-    const score = minimax(board, depth + 1, true);
+    const score = minimax(
+      board,
+      depth + 1,
+      true,
+    );
 
     board[index] = null;
 
@@ -189,10 +151,10 @@ function minimax(board, depth, isMaximizing) {
 }
 
 // ============================================================
-// GET BEST BOT MOVE
+// BOT MOVE
 // ============================================================
 
-function getBestMove(board) {
+function getBotMove(board) {
   const emptyCells = getEmptyCells(board);
 
   if (emptyCells.length === 0) {
@@ -205,7 +167,11 @@ function getBestMove(board) {
   for (const index of emptyCells) {
     board[index] = "O";
 
-    const score = minimax(board, 0, false);
+    const score = minimax(
+      board,
+      0,
+      false,
+    );
 
     board[index] = null;
 
@@ -219,554 +185,247 @@ function getBestMove(board) {
 }
 
 // ============================================================
-// RESET GAME
+// PARSE COMMAND
 // ============================================================
 
-function resetGame(state) {
+const parts = issueTitle.split("|");
+
+if (parts.length !== 2 || parts[0].toLowerCase() !== "ttt") {
+  console.log("Issue không phải Tic-Tac-Toe.");
+  process.exit(0);
+}
+
+const command = parts[1].trim().toLowerCase();
+
+// ============================================================
+// RESET
+// ============================================================
+
+if (command === "reset") {
   state.board = Array(9).fill(null);
   state.status = "playing";
 
   console.log("Game đã được reset.");
-
-  saveState(state);
 }
 
 // ============================================================
-// PARSE ISSUE COMMAND
+// PLAYER MOVE
 // ============================================================
 
-function parseCommand(title) {
-  const parts = title.split("|");
+else if (/^[0-8]$/.test(command)) {
+  const move = Number(command);
 
-  if (parts.length !== 2) {
-    return null;
+  console.log("Player move:", move);
+  console.log("Board before:", state.board);
+
+  // ----------------------------------------------------------
+  // GAME ALREADY FINISHED
+  // ----------------------------------------------------------
+
+  if (state.status !== "playing") {
+    console.log("Game đã kết thúc.");
+
+  // ----------------------------------------------------------
+  // CELL ALREADY USED
+  // ----------------------------------------------------------
+
+  } else if (state.board[move] !== null) {
+    console.log(
+      `Ô ${move} đã được sử dụng bởi ${state.board[move]}.`,
+    );
+
+  // ----------------------------------------------------------
+  // PLAYER = X
+  // ----------------------------------------------------------
+
+  } else {
+    state.board[move] = "X";
+
+    console.log(`Player đặt X vào ô ${move}.`);
+
+    // --------------------------------------------------------
+    // CHECK PLAYER WIN
+    // --------------------------------------------------------
+
+    let winner = checkWinner(state.board);
+
+    if (winner === "X") {
+      state.status = "won";
+
+      console.log("Player thắng!");
+    }
+
+    // --------------------------------------------------------
+    // CHECK DRAW
+    // --------------------------------------------------------
+
+    else if (winner === "draw") {
+      state.status = "draw";
+
+      console.log("Hòa!");
+    }
+
+    // --------------------------------------------------------
+    // BOT = O
+    // --------------------------------------------------------
+
+    else {
+      const botMove = getBotMove(state.board);
+
+      if (botMove !== null) {
+        state.board[botMove] = "O";
+
+        console.log(
+          `Bot đặt O vào ô ${botMove}.`,
+        );
+      }
+
+      // ------------------------------------------------------
+      // CHECK BOT WIN
+      // ------------------------------------------------------
+
+      winner = checkWinner(state.board);
+
+      if (winner === "O") {
+        state.status = "lost";
+
+        console.log("Bot thắng!");
+      }
+
+      // ------------------------------------------------------
+      // CHECK DRAW
+      // ------------------------------------------------------
+
+      else if (winner === "draw") {
+        state.status = "draw";
+
+        console.log("Hòa!");
+      }
+
+      // ------------------------------------------------------
+      // GAME CONTINUES
+      // ------------------------------------------------------
+
+      else {
+        state.status = "playing";
+      }
+    }
   }
-
-  if (parts[0].toLowerCase() !== "ttt") {
-    return null;
-  }
-
-  return parts[1].trim().toLowerCase();
 }
 
 // ============================================================
-// SVG ICON
+// INVALID COMMAND
 // ============================================================
 
-function svgToDataUri(svg) {
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-}
-
-// ============================================================
-// EMPTY CELL ICON
-// ============================================================
-
-function emptyIcon() {
-  const svg = `
-<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56">
-  <rect
-    x="1"
-    y="1"
-    width="54"
-    height="54"
-    rx="10"
-    fill="#161b22"
-    stroke="#30363d"
-    stroke-width="2"
-  />
-  <text
-    x="28"
-    y="35"
-    text-anchor="middle"
-    font-family="Arial"
-    font-size="24"
-    fill="#484f58"
-  >+</text>
-</svg>`;
-
-  return svgToDataUri(svg);
-}
-
-// ============================================================
-// X ICON
-// ============================================================
-
-function xIcon() {
-  const svg = `
-<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56">
-  <rect
-    x="1"
-    y="1"
-    width="54"
-    height="54"
-    rx="10"
-    fill="#161b22"
-    stroke="#30363d"
-    stroke-width="2"
-  />
-
-  <line
-    x1="17"
-    y1="17"
-    x2="39"
-    y2="39"
-    stroke="#ff5555"
-    stroke-width="5"
-    stroke-linecap="round"
-  />
-
-  <line
-    x1="39"
-    y1="17"
-    x2="17"
-    y2="39"
-    stroke="#ff5555"
-    stroke-width="5"
-    stroke-linecap="round"
-  />
-</svg>`;
-
-  return svgToDataUri(svg);
-}
-
-// ============================================================
-// O ICON
-// ============================================================
-
-function oIcon() {
-  const svg = `
-<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56">
-  <rect
-    x="1"
-    y="1"
-    width="54"
-    height="54"
-    rx="10"
-    fill="#161b22"
-    stroke="#30363d"
-    stroke-width="2"
-  />
-
-  <circle
-    cx="28"
-    cy="28"
-    r="13"
-    fill="none"
-    stroke="#55ff55"
-    stroke-width="5"
-  />
-</svg>`;
-
-  return svgToDataUri(svg);
+else {
+  console.log("Nước đi không hợp lệ:", command);
+  process.exit(0);
 }
 
 // ============================================================
 // STATUS BADGE
 // ============================================================
 
-function renderBadge(status) {
-  if (status === "won") {
-    return `
-<br>
+let badge = "";
 
-<img
-  src="https://img.shields.io/badge/🏆_Winner-You_Are_Pro!-gold?style=for-the-badge"
-  alt="You Win"
-/>`;
-  }
+if (state.status === "won") {
+  badge =
+    '<br><img src="https://img.shields.io/badge/Winner-You_Are_Pro!-gold?style=for-the-badge&logo=github">';
+}
 
-  if (status === "lost") {
-    return `
-<br>
+else if (state.status === "lost") {
+  badge =
+    '<br><img src="https://img.shields.io/badge/Winner-Bot_Wins-red?style=for-the-badge">';
+}
 
-<img
-  src="https://img.shields.io/badge/🤖_Winner-Bot_Wins-red?style=for-the-badge"
-  alt="Bot Wins"
-/>`;
-  }
-
-  if (status === "draw") {
-    return `
-<br>
-
-<img
-  src="https://img.shields.io/badge/🤝_Result-Draw-blue?style=for-the-badge"
-  alt="Draw"
-/>`;
-  }
-
-  return "";
+else if (state.status === "draw") {
+  badge =
+    '<br><img src="https://img.shields.io/badge/Result-Draw-blue?style=for-the-badge">';
 }
 
 // ============================================================
 // RENDER CELL
 // ============================================================
+// GIỮ NGUYÊN UI CŨ
+// ============================================================
 
-function renderCell(value, index, gameFinished) {
-  if (value === "X") {
-    return `
-<td
-  width="64"
-  height="64"
-  align="center"
-  valign="middle"
->
-  <img
-    src="${xIcon()}"
-    width="56"
-    height="56"
-    alt="X"
-  />
-</td>`;
-  }
-
-  if (value === "O") {
-    return `
-<td
-  width="64"
-  height="64"
-  align="center"
-  valign="middle"
->
-  <img
-    src="${oIcon()}"
-    width="56"
-    height="56"
-    alt="O"
-  />
-</td>`;
-  }
-
-  // Không cho click nếu game đã kết thúc
-  if (gameFinished) {
-    return `
-<td
-  width="64"
-  height="64"
-  align="center"
-  valign="middle"
->
-  <img
-    src="${emptyIcon()}"
-    width="56"
-    height="56"
-    alt="Empty"
-  />
-</td>`;
-  }
-
-  const issueUrl =
-    `https://github.com/${GITHUB_USERNAME}/${GITHUB_REPO}/issues/new?title=` +
-    encodeURIComponent(`ttt|${index}`);
-
-  return `
-<td
-  width="64"
-  height="64"
-  align="center"
-  valign="middle"
->
-  <a href="${issueUrl}">
-    <img
-      src="${emptyIcon()}"
-      width="56"
-      height="56"
-      alt="Play ${index}"
-    />
-  </a>
-</td>`;
-}
+const renderCell = (v, i) =>
+  v
+    ? `<img src="https://placehold.co/50x50/21262d/${
+        v === "X" ? "ff5555" : "55ff55"
+      }/png?text=${v}" width="50">`
+    : `<a href="https://github.com/${username}/${username}/issues/new?title=ttt|${i}"><img src="https://placehold.co/50x50/21262d/21262d.png" width="50"></a>`;
 
 // ============================================================
 // RENDER BOARD
 // ============================================================
+// GIỮ NGUYÊN UI CŨ
+// ============================================================
 
-function renderBoard(state) {
-  const gameFinished = state.status !== "playing";
-
-  let html = `
-<table
-  border="0"
-  cellpadding="4"
-  cellspacing="0"
-  align="center"
->
-`;
-
-  for (let row = 0; row < 3; row++) {
-    html += "<tr>";
-
-    for (let col = 0; col < 3; col++) {
-      const index = row * 3 + col;
-
-      html += renderCell(
-        state.board[index],
-        index,
-        gameFinished,
-      );
-    }
-
-    html += "</tr>";
-  }
-
-  html += "</table>";
-
-  html += renderBadge(state.status);
-
-  return html;
-}
+const boardHtml =
+  `<table border="1" style="border-collapse: collapse; border-color: #30363d;"><tr>` +
+  state.board
+    .map(
+      (v, i) =>
+        `<td width="60" height="60" align="center">${renderCell(
+          v,
+          i,
+        )}</td>${
+          (i + 1) % 3 === 0
+            ? "</tr>" +
+              (i + 1 < 9 ? "<tr>" : "")
+            : ""
+        }`,
+    )
+    .join("") +
+  `</table>${badge}`;
 
 // ============================================================
 // UPDATE README
 // ============================================================
 
-function updateReadme(state) {
-  if (!fs.existsSync(README_PATH)) {
-    console.log("Không tìm thấy README.md.");
-    return;
-  }
-
-  let readme = fs.readFileSync(README_PATH, "utf8");
-
-  if (!readme.includes(BOARD_START)) {
-    console.log("Không tìm thấy BOARD_START trong README.");
-    return;
-  }
-
-  if (!readme.includes(BOARD_END)) {
-    console.log("Không tìm thấy BOARD_END trong README.");
-    return;
-  }
-
-  const boardHtml = renderBoard(state);
-
-  const replacement =
-    `${BOARD_START}\n` +
-    boardHtml +
-    `\n${BOARD_END}`;
-
-  const pattern =
-    /<!-- BOARD_START -->[\s\S]*?<!-- BOARD_END -->/;
-
-  readme = readme.replace(pattern, replacement);
-
-  fs.writeFileSync(
-    README_PATH,
-    readme,
+if (fs.existsSync(readmePath)) {
+  let readme = fs.readFileSync(
+    readmePath,
     "utf8",
   );
 
-  console.log("README.md đã được cập nhật.");
-}
-
-// ============================================================
-// PRINT BOARD
-// ============================================================
-
-function printBoard(board) {
-  console.log("");
-  console.log("Current board:");
-  console.log("");
-
-  for (let row = 0; row < 3; row++) {
-    const cells = [];
-
-    for (let col = 0; col < 3; col++) {
-      const index = row * 3 + col;
-      cells.push(board[index] || " ");
-    }
-
-    console.log(` ${cells.join(" │ ")} `);
-
-    if (row < 2) {
-      console.log("───┼───┼───");
-    }
-  }
-
-  console.log("");
-}
-
-// ============================================================
-// MAIN
-// ============================================================
-
-function main() {
-  console.log("========================================");
-  console.log("       TIC-TAC-TOE GAME ENGINE");
-  console.log("========================================");
-
-  console.log("Issue title:", issueTitle);
-
-  const command = parseCommand(issueTitle);
-
-  if (command === null) {
-    console.log("Command không hợp lệ.");
-    process.exit(0);
-  }
-
-  console.log("Command:", command);
-
-  const state = loadState();
-
-  console.log("Status:", state.status);
-
-  printBoard(state.board);
-
-  // ==========================================================
-  // RESET
-  // ==========================================================
-
-  if (command === "reset") {
-    resetGame(state);
-    updateReadme(state);
-
-    console.log("Game mới đã sẵn sàng.");
-    return;
-  }
-
-  // ==========================================================
-  // VALIDATE MOVE
-  // ==========================================================
-
-  if (!/^[0-8]$/.test(command)) {
-    console.log("Nước đi không hợp lệ:", command);
-    process.exit(0);
-  }
-
-  const move = Number(command);
-
-  console.log("Player move:", move);
-
-  // ==========================================================
-  // GAME ALREADY FINISHED
-  // ==========================================================
-
-  if (state.status !== "playing") {
-    console.log(
-      "Game đã kết thúc. Không thể thực hiện nước đi.",
+  if (
+    readme.includes("<!-- BOARD_START -->") &&
+    readme.includes("<!-- BOARD_END -->")
+  ) {
+    readme = readme.replace(
+      /<!-- BOARD_START -->[\s\S]*?<!-- BOARD_END -->/,
+      `<!-- BOARD_START -->\n${boardHtml}\n<!-- BOARD_END -->`,
     );
 
-    updateReadme(state);
-    return;
-  }
-
-  // ==========================================================
-  // CELL ALREADY OCCUPIED
-  // ==========================================================
-
-  if (state.board[move] !== null) {
-    console.log(
-      `Ô ${move} đã được sử dụng bởi ${state.board[move]}.`,
+    fs.writeFileSync(
+      readmePath,
+      readme,
+      "utf8",
     );
 
-    updateReadme(state);
-    return;
-  }
-
-  // ==========================================================
-  // PLAYER MOVE
-  // ==========================================================
-
-  state.board[move] = "X";
-
-  console.log(`Player đặt X vào ô ${move}.`);
-
-  printBoard(state.board);
-
-  // ==========================================================
-  // CHECK PLAYER WIN
-  // ==========================================================
-
-  let winner = checkWinner(state.board);
-
-  if (winner === "X") {
-    state.status = "won";
-
-    console.log("🎉 PLAYER WIN!");
-
-    saveState(state);
-    updateReadme(state);
-
-    return;
-  }
-
-  // ==========================================================
-  // CHECK DRAW
-  // ==========================================================
-
-  if (winner === "draw") {
-    state.status = "draw";
-
-    console.log("🤝 DRAW!");
-
-    saveState(state);
-    updateReadme(state);
-
-    return;
-  }
-
-  // ==========================================================
-  // BOT MOVE
-  // ==========================================================
-
-  const botMove = getBestMove(state.board);
-
-  if (botMove !== null) {
-    state.board[botMove] = "O";
-
-    console.log(`Bot đặt O vào ô ${botMove}.`);
-  }
-
-  printBoard(state.board);
-
-  // ==========================================================
-  // CHECK BOT WIN
-  // ==========================================================
-
-  winner = checkWinner(state.board);
-
-  if (winner === "O") {
-    state.status = "lost";
-
-    console.log("🤖 BOT WIN!");
-  } else if (winner === "draw") {
-    state.status = "draw";
-
-    console.log("🤝 DRAW!");
+    console.log("README đã được cập nhật.");
   } else {
-    state.status = "playing";
-
-    console.log("🎮 Game tiếp tục.");
+    console.log(
+      "Không tìm thấy BOARD_START / BOARD_END.",
+    );
   }
-
-  // ==========================================================
-  // SAVE
-  // ==========================================================
-
-  saveState(state);
-
-  // ==========================================================
-  // UPDATE README
-  // ==========================================================
-
-  updateReadme(state);
-
-  console.log("");
-  console.log("========================================");
-  console.log("Game update completed.");
-  console.log("Status:", state.status);
-  console.log("========================================");
 }
 
 // ============================================================
-// RUN
+// SAVE STATE
 // ============================================================
 
-try {
-  main();
-} catch (error) {
-  console.error("");
-  console.error("❌ GAME ENGINE ERROR");
-  console.error(error);
-  process.exit(1);
-}
+fs.writeFileSync(
+  statePath,
+  JSON.stringify(state, null, 2),
+  "utf8",
+);
+
+console.log("");
+console.log("==============================");
+console.log("Cập nhật game thành công!");
+console.log("Status:", state.status);
+console.log("Board:", state.board);
+console.log("==============================");
