@@ -82,5 +82,5 @@
 </div>
 <br>
 <div align="center">
-<img src="https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=200&section=header&text=Phạm%20Trương%20Thông&fontSize=50&fontAlignY=35" alt="Header" width="100%">
+<img src="https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=200&section=header&text=Phạm%20Trương%20Thông&fontSize=50&fontAlignY=35" alt="Footer" width="100%">
 </div>
