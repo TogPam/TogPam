@@ -5,10 +5,10 @@
     "X",
     null,
     "O",
+    "O",
     null,
     null,
-    null,
-    null
+    "X"
   ],
   "status": "playing"
 }
